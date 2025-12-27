@@ -89,6 +89,11 @@ export default function HomePage() {
                   <div className="mt-3 h-1 w-full rounded-full bg-white/5">
                     <div className="h-full w-2/3 rounded-full bg-orange-500/70" />
                   </div>
+                  <Link href="/find" className="block mt-4">
+                    <Button size="sm" variant="outline" className="w-full text-xs">
+                      Browse Builders →
+                    </Button>
+                  </Link>
                 </CardContent>
               </Card>
 
@@ -104,11 +109,31 @@ export default function HomePage() {
                     <span className="h-2 w-2 rounded-full bg-orange-400/60" />
                     <span className="h-2 w-2 rounded-full bg-orange-400/30" />
                   </div>
+                  <Link href="/find" className="block mt-4">
+                    <Button size="sm" className="w-full text-xs">
+                      Get Started →
+                    </Button>
+                  </Link>
                 </CardContent>
               </Card>
             </div>
           </div>
         </section>
+
+        {/* Footer */}
+        <footer className="mt-20 border-t border-white/10 pt-8">
+          <div className="flex flex-wrap items-center justify-between gap-4 text-xs text-slate-500">
+            <p>© 2025 Ship-It. All rights reserved.</p>
+            <div className="flex gap-6">
+              <Link href="/privacy" className="hover:text-slate-300 transition-colors">
+                Privacy Policy
+              </Link>
+              <Link href="/terms" className="hover:text-slate-300 transition-colors">
+                Terms of Service
+              </Link>
+            </div>
+          </div>
+        </footer>
       </div>
     </main>
   );

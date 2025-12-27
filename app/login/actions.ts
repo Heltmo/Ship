@@ -64,3 +64,29 @@ export async function signInWithGithub(formData: FormData) {
 
   redirect(data.url);
 }
+
+export async function signInWithGoogle(formData: FormData) {
+  const origin =
+    headers().get("origin") ??
+    process.env.NEXT_PUBLIC_SITE_URL ??
+    "http://localhost:3000";
+  const next = String(formData.get("next") ?? "").trim();
+  const redirectTo =
+    next && next.startsWith("/")
+      ? `${origin}/auth/callback?next=${encodeURIComponent(next)}`
+      : `${origin}/auth/callback`;
+
+  const supabase = createServerSupabaseClient();
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: "google",
+    options: {
+      redirectTo,
+    },
+  });
+
+  if (error || !data?.url) {
+    redirect("/login?error=google-oauth");
+  }
+
+  redirect(data.url);
+}

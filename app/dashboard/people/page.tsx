@@ -42,7 +42,7 @@ export default async function PeoplePage() {
 
   const seed = Math.floor(Date.now() / (5 * 60 * 1000));
   const others = users.filter((user: FeedUser) => user.id !== viewerId);
-  const windowSize = 7;
+  const windowSize = 4;
   const rotationStart = others.length > 0 ? (seed * windowSize) % others.length : 0;
   const rotated = [
     ...others.slice(rotationStart),

@@ -16,8 +16,35 @@ const displayFont = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "SHIP-IT",
-  description: "Proof-first cofounder matching for builders who ship."
+  title: "Ship-It - Find Your Co-Founder | Proof-of-Work Matching for Builders",
+  description: "The curated network for founders who ship. Find co-founders through proof of work. Connect GitHub, showcase your projects, and match with serious builders.",
+  keywords: ["cofounder", "startup", "founders", "technical cofounder", "find cofounder", "github", "proof of work", "builders", "makers"],
+  authors: [{ name: "Ship-It" }],
+  creator: "Ship-It",
+  publisher: "Ship-It",
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"),
+  openGraph: {
+    type: "website",
+    locale: "en_US",
+    url: "/",
+    title: "Ship-It - Find Your Co-Founder",
+    description: "The curated network for founders who ship. Find co-founders through proof of work.",
+    siteName: "Ship-It",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Ship-It - Find Your Co-Founder",
+    description: "The curated network for founders who ship. Find co-founders through proof of work.",
+    creator: "@yourtwitterhandle", // TODO: Replace with actual Twitter handle
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+    },
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
