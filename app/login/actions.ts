@@ -4,6 +4,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { isValidRedirect } from "@/lib/security/validate-redirect";
 
 export async function sendMagicLink(formData: FormData) {
   const email = String(formData.get("email") ?? "")
@@ -20,7 +21,7 @@ export async function sendMagicLink(formData: FormData) {
     process.env.NEXT_PUBLIC_SITE_URL ??
     "http://localhost:3000";
   const redirectTo =
-    next && next.startsWith("/")
+    next && isValidRedirect(next)
       ? `${origin}/auth/callback?next=${encodeURIComponent(next)}`
       : `${origin}/auth/callback`;
 
@@ -46,7 +47,7 @@ export async function signInWithGithub(formData: FormData) {
     "http://localhost:3000";
   const next = String(formData.get("next") ?? "").trim();
   const redirectTo =
-    next && next.startsWith("/")
+    next && isValidRedirect(next)
       ? `${origin}/auth/callback?next=${encodeURIComponent(next)}`
       : `${origin}/auth/callback`;
 
@@ -72,7 +73,7 @@ export async function signInWithGoogle(formData: FormData) {
     "http://localhost:3000";
   const next = String(formData.get("next") ?? "").trim();
   const redirectTo =
-    next && next.startsWith("/")
+    next && isValidRedirect(next)
       ? `${origin}/auth/callback?next=${encodeURIComponent(next)}`
       : `${origin}/auth/callback`;
 

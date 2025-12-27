@@ -1,14 +1,19 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { isValidRedirect } from "@/lib/security/validate-redirect";
+import { logger } from "@/lib/logger";
 
 export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url);
   const code = requestUrl.searchParams.get("code");
-  const next = requestUrl.searchParams.get("next") || "/dashboard";
+  const nextParam = requestUrl.searchParams.get("next") || "/dashboard";
 
-  console.log("🔐 Auth callback started");
-  console.log("Code present:", !!code);
-  console.log("Redirect to:", next);
+  // Validate redirect to prevent open redirect vulnerability
+  const next = isValidRedirect(nextParam) ? nextParam : "/dashboard";
+
+  logger.debug("🔐 Auth callback started");
+  logger.debug("Code present:", !!code);
+  logger.debug("Redirect to:", next);
 
   if (code) {
     let response = NextResponse.next({
@@ -26,12 +31,12 @@ export async function GET(request: NextRequest) {
             return request.cookies.get(name)?.value;
           },
           set(name: string, value: string, options: any) {
-            console.log("🍪 Setting cookie:", name);
+            logger.debug("🍪 Setting cookie:", name);
             request.cookies.set({ name, value, ...options });
             response.cookies.set({ name, value, ...options });
           },
           remove(name: string, options: any) {
-            console.log("🗑️  Removing cookie:", name);
+            logger.debug("🗑️  Removing cookie:", name);
             request.cookies.set({ name, value: "", ...options });
             response.cookies.set({ name, value: "", ...options });
           },
@@ -43,12 +48,12 @@ export async function GET(request: NextRequest) {
       const { data, error } = await supabase.auth.exchangeCodeForSession(code);
 
       if (error) {
-        console.error("❌ Auth callback error:", error);
+        logger.error("❌ Auth callback error:", error);
         return NextResponse.redirect(new URL("/login?error=auth-failed", requestUrl.origin));
       }
 
-      console.log("✅ Session created for user:", data?.user?.email);
-      console.log("✅ Redirecting with cookies set");
+      logger.debug("✅ Session created for user:", data?.user?.email);
+      logger.debug("✅ Redirecting with cookies set");
 
       // Create redirect response and copy cookies set during exchange
       const redirectResponse = NextResponse.redirect(new URL(next, requestUrl.origin));
@@ -58,11 +63,11 @@ export async function GET(request: NextRequest) {
 
       return redirectResponse;
     } catch (e) {
-      console.error("❌ Unexpected error in callback:", e);
+      logger.error("❌ Unexpected error in callback:", e);
       return NextResponse.redirect(new URL("/login?error=auth-failed", requestUrl.origin));
     }
   }
 
-  console.log("⚠️  No code provided, redirecting anyway");
+  logger.debug("⚠️  No code provided, redirecting anyway");
   return NextResponse.redirect(new URL(next, requestUrl.origin));
 }

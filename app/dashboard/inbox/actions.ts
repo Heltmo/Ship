@@ -179,6 +179,15 @@ export async function sendMessage(threadId: string, content: string) {
     return { error: "Not authenticated" };
   }
 
+  // Validate message content
+  const trimmedContent = content.trim();
+  if (!trimmedContent) {
+    return { error: "Message cannot be empty" };
+  }
+  if (trimmedContent.length > 10000) {
+    return { error: "Message too long (max 10,000 characters)" };
+  }
+
   // Verify user is a participant
   const { data: participant } = await supabase
     .from("thread_participants")
@@ -197,7 +206,7 @@ export async function sendMessage(threadId: string, content: string) {
     .insert({
       thread_id: threadId,
       sender_user_id: user.id,
-      content: content,
+      content: trimmedContent,
     })
     .select()
     .single();

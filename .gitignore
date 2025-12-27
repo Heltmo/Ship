@@ -13,3 +13,5 @@ pnpm-debug.log*
 dist/
 out/
 nul
+
+.vercel
