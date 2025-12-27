@@ -14,6 +14,7 @@ type GitHubRepo = {
   language: string | null;
   pushed_at: string;
   topics: string[];
+  private: boolean;
   owner: {
     login: string;
   };
