@@ -27,7 +27,7 @@ export function GatingStatusCard({ status }: GatingStatusProps) {
               Eligible
             </Badge>
           ) : (
-            <Badge variant="secondary" className="bg-orange-500/20 text-orange-200">
+            <Badge variant="outline" className="bg-orange-500/20 text-orange-200">
               <XCircle className="mr-1 h-3 w-3" />
               Locked
             </Badge>
