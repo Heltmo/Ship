@@ -21,7 +21,7 @@ export default async function ThreadPage({
     <ChatInterface
       threadId={result.threadId!}
       initialMessages={result.messages || []}
-      otherUser={result.otherUser}
+      otherUser={result.otherUser || null}
     />
   );
 }
