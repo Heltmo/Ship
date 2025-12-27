@@ -1,8 +1,16 @@
-import { NextResponse } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 import { cookies } from "next/headers";
 import { randomBytes } from "crypto";
+import { authLimiter } from "@/lib/security/rate-limit";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  // Rate limiting: prevent OAuth spam
+  const ip = request.headers.get("x-forwarded-for") ?? request.headers.get("x-real-ip") ?? "anonymous";
+  const { success } = await authLimiter.limit(ip);
+
+  if (!success) {
+    return new NextResponse("Too many requests. Please try again later.", { status: 429 });
+  }
   // Generate a random state for CSRF protection
   const state = randomBytes(32).toString("hex");
 

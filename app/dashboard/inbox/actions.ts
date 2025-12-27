@@ -2,6 +2,7 @@
 
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import { messageLimiter } from "@/lib/security/rate-limit";
 
 // Get all threads for the current user
 export async function getUserThreads() {
@@ -177,6 +178,12 @@ export async function sendMessage(threadId: string, content: string) {
 
   if (!user) {
     return { error: "Not authenticated" };
+  }
+
+  // Rate limiting: prevent message spam
+  const { success } = await messageLimiter.limit(user.id);
+  if (!success) {
+    return { error: "Too many messages. Please wait before sending more." };
   }
 
   // Validate message content

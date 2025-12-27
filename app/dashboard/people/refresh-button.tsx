@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 
-const REFRESH_WINDOW_MS = 5 * 60 * 1000;
+const REFRESH_WINDOW_MS = 2 * 60 * 1000; // 2 minutes
 
 function getMsUntilNextWindow() {
   const now = Date.now();

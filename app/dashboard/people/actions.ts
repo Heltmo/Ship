@@ -2,6 +2,7 @@
 
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import { messageLimiter } from "@/lib/security/rate-limit";
 
 // Get viewer's profile and eligibility status
 export async function getViewerEligibility() {
@@ -140,6 +141,12 @@ export async function startThreadWithUser(targetUserId: string, firstMessage: st
 
   if (!user) {
     return { error: "NOT_AUTHENTICATED" };
+  }
+
+  // Rate limiting: prevent thread spam
+  const { success } = await messageLimiter.limit(user.id);
+  if (!success) {
+    return { error: "TOO_MANY_REQUESTS" };
   }
 
   const { data, error } = await supabase.rpc("rpc_start_thread", {
