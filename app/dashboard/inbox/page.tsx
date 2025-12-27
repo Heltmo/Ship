@@ -5,6 +5,8 @@ import { getUserThreads } from "./actions";
 import { redirect } from "next/navigation";
 import { MessageCircle } from "lucide-react";
 
+export const dynamic = "force-dynamic";
+
 export default async function InboxPage() {
   const { threads } = await getUserThreads();
 
@@ -17,7 +19,7 @@ export default async function InboxPage() {
       <div>
         <h1 className="text-2xl font-bold">Inbox</h1>
         <p className="text-sm text-slate-400 mt-1">
-          Chats open after a mutual like in People
+          Start a chat from People and keep everything in one place.
         </p>
       </div>
 
@@ -26,7 +28,7 @@ export default async function InboxPage() {
           <CardContent className="py-12 text-center">
             <MessageCircle className="h-12 w-12 text-slate-400 mx-auto mb-4" />
             <p className="text-slate-400">
-              No conversations yet. Match with someone in the People feed to start chatting!
+              No conversations yet. Say hello in People to start.
             </p>
           </CardContent>
         </Card>

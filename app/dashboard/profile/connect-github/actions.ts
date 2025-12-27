@@ -140,8 +140,26 @@ export async function importGitHubRepos(
     // Clear the temporary token cookie
     cookies().delete("github_temp_token");
 
+    // Check if builder profile is complete
+    const { data: profile } = await supabase
+      .from("users_profile")
+      .select("timezone, availability_hours_per_week, work_best_mode, iteration_style, stack_focus")
+      .eq("id", user.id)
+      .single();
+
+    const needsOnboarding = !(
+      profile?.timezone &&
+      profile?.availability_hours_per_week &&
+      profile?.work_best_mode &&
+      (profile.work_best_mode as any[]).length > 0 &&
+      profile?.iteration_style &&
+      profile?.stack_focus &&
+      (profile.stack_focus as any[]).length > 0
+    );
+
     // Revalidate profile page
     revalidatePath("/dashboard/profile");
+    revalidatePath("/dashboard/profile/builder-onboarding");
 
     return {
       success: true,
@@ -149,6 +167,7 @@ export async function importGitHubRepos(
       message: `Successfully imported ${data?.length || 0} ${
         data?.length === 1 ? "repository" : "repositories"
       }`,
+      redirect: needsOnboarding ? "/find" : "/matches",
     };
   } catch (error) {
     console.error("Error importing GitHub repos:", error);

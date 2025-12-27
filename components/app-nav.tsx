@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { signOut } from "@/app/actions";
 import { Button } from "@/components/ui/button";
+import { Send } from "lucide-react";
 
 interface AppNavProps {
   email?: string | null;
@@ -19,7 +20,10 @@ export function AppNav({ email }: AppNavProps) {
       <div className="mx-auto w-full max-w-6xl px-6 py-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <Link href="/" className="text-lg font-semibold tracking-tight text-orange-400">
-            &gt;_ SHIP-IT_
+            <span className="inline-flex items-center gap-2">
+              <Send className="h-4 w-4" />
+              <span>&gt;_ SHIP-IT_</span>
+            </span>
           </Link>
           <div className="flex items-center gap-4 text-xs text-slate-400">
             <div className="hidden sm:flex items-center gap-3">

@@ -17,7 +17,7 @@ export async function getViewerEligibility() {
 
   const { data: profile } = await supabase
     .from("users_profile")
-    .select("is_eligible")
+    .select("is_eligible, timezone, availability_hours_per_week, work_best_mode, iteration_style, stack_focus")
     .eq("id", user.id)
     .single();
 
@@ -41,12 +41,24 @@ export async function getViewerEligibility() {
 
   const hasGitHub = !!githubIdentity;
   const totalPortfolio = portfolioCount || 0;
-  const computedEligibility = hasGitHub && totalPortfolio >= 2;
+
+  // Check if builder profile is complete
+  const builderProfileComplete = !!(
+    profile.timezone &&
+    profile.availability_hours_per_week &&
+    profile.availability_hours_per_week > 0 &&
+    profile.work_best_mode &&
+    (profile.work_best_mode as any[]).length > 0 &&
+    profile.iteration_style &&
+    profile.stack_focus &&
+    (profile.stack_focus as any[]).length > 0
+  );
 
   return {
-    isEligible: profile?.is_eligible ?? computedEligibility,
+    isEligible: profile?.is_eligible ?? false,
     hasGitHub,
     portfolioCount: totalPortfolio,
+    builderProfileComplete,
   };
 }
 
@@ -59,7 +71,7 @@ export async function getFeedPeople(limit = 50, offset = 0) {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return { users: [] };
+    return { users: [], viewerId: null };
   }
 
   // Call RPC to get feed
@@ -70,46 +82,56 @@ export async function getFeedPeople(limit = 50, offset = 0) {
 
   if (error) {
     console.error("Error fetching feed:", error);
-    return { users: [] };
+    return { users: [], viewerId: user.id };
   }
 
-  return { users: data || [] };
+  const otherIds = (data || []).map((row: any) => row.id).filter(Boolean);
+  let allowMessageMap = new Map<string, boolean>();
+
+  if (otherIds.length > 0) {
+    const { data: allowRows } = await supabase
+      .from("users_profile")
+      .select("id, allow_messages")
+      .in("id", otherIds);
+
+    allowMessageMap = new Map(
+      (allowRows || []).map((row) => [row.id, row.allow_messages ?? true])
+    );
+  }
+
+  const normalizedUsers = (data || []).map((row: any) => ({
+    ...row,
+    allow_messages: allowMessageMap.get(row.id) ?? row.allow_messages ?? true,
+  }));
+
+  const { data: selfProfile } = await supabase
+    .from("users_profile")
+    .select(
+      "id, full_name, headline, bio, location, github_url, linkedin_url, timezone, availability_hours_per_week, work_best_mode, iteration_style, stack_focus, want_to_build_next, allow_messages"
+    )
+    .eq("id", user.id)
+    .single();
+
+  const { count: selfPortfolioCount } = await supabase
+    .from("portfolio_items")
+    .select("*", { count: "exact", head: true })
+    .eq("user_id", user.id);
+
+  const selfUser = selfProfile
+    ? {
+        ...selfProfile,
+        portfolio_count: selfPortfolioCount || 0,
+      }
+    : null;
+
+  return {
+    users: selfUser ? [selfUser, ...normalizedUsers] : normalizedUsers,
+    viewerId: user.id,
+  };
 }
 
-// Pass on a user (allowed for everyone)
-export async function passUser(targetUserId: string) {
-  const supabase = createServerSupabaseClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return { error: "Not authenticated" };
-  }
-
-  // Call RPC
-  const { data, error } = await supabase.rpc("rpc_pass_user", {
-    p_target_user_id: targetUserId,
-  });
-
-  if (error) {
-    console.error("Error passing user:", error);
-    return { error: "Failed to pass user" };
-  }
-
-  const result = data as any;
-
-  if (result.error) {
-    return { error: result.error };
-  }
-
-  revalidatePath("/dashboard/people");
-  return { success: true };
-}
-
-// Like a user (only allowed for eligible users)
-export async function likeUser(targetUserId: string) {
+// Start a direct thread with a user (no like required)
+export async function startThreadWithUser(targetUserId: string, firstMessage: string) {
   const supabase = createServerSupabaseClient();
 
   const {
@@ -120,85 +142,20 @@ export async function likeUser(targetUserId: string) {
     return { error: "NOT_AUTHENTICATED" };
   }
 
-  // Call RPC (eligibility check is done server-side in the RPC)
-  const { data, error } = await supabase.rpc("rpc_like_user", {
+  const { data, error } = await supabase.rpc("rpc_start_thread", {
     p_target_user_id: targetUserId,
+    p_first_message: firstMessage,
   });
 
   if (error) {
-    console.error("Error liking user:", error);
-    return { error: "UNKNOWN_ERROR" };
+    console.error("Error starting thread:", error);
+    if (error.message?.includes("TARGET_MESSAGES_DISABLED")) {
+      return { error: "TARGET_MESSAGES_DISABLED" };
+    }
+    return { error: "FAILED_TO_START_THREAD" };
   }
 
-  const result = data as any;
-
-  if (result.error) {
-    return { error: result.error };
-  }
-
-  revalidatePath("/dashboard/people");
   revalidatePath("/dashboard/inbox");
 
-  return {
-    success: true,
-    matched: result.matched || false,
-    matchId: result.match_id,
-    threadId: result.thread_id,
-    createdNewMatch: result.created_new_match || false,
-  };
-}
-
-// Save a user for later
-export async function saveUser(targetUserId: string) {
-  const supabase = createServerSupabaseClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return { error: "Not authenticated" };
-  }
-
-  // Insert save interaction
-  const { error } = await supabase.from("interactions").insert({
-    actor_user_id: user.id,
-    target_type: "user",
-    target_id: targetUserId,
-    action: "save",
-  });
-
-  if (error) {
-    // Ignore duplicate key errors
-    if (!error.message.includes("unique")) {
-      console.error("Error saving user:", error);
-      return { error: "Failed to save user" };
-    }
-  }
-
-  revalidatePath("/dashboard/people");
-  return { success: true };
-}
-
-// Get user's interactions (to know who they've already liked/passed/saved)
-export async function getUserInteractions() {
-  const supabase = createServerSupabaseClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return { interactions: [] };
-  }
-
-  const { data: interactions } = await supabase
-    .from("interactions")
-    .select("target_id, action")
-    .eq("actor_user_id", user.id)
-    .eq("target_type", "user");
-
-  return {
-    interactions: interactions || [],
-  };
+  return { threadId: data as string };
 }

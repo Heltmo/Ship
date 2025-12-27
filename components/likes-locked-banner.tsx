@@ -7,6 +7,7 @@ type EligibilityStatus = {
   isEligible: boolean;
   hasGitHub: boolean;
   portfolioCount: number;
+  builderProfileComplete: boolean;
 };
 
 interface LikesLockedBannerProps {
@@ -30,6 +31,11 @@ export function LikesLockedBanner({ eligibility }: LikesLockedBannerProps) {
       completed: eligibility.portfolioCount >= 2,
       progress: `${eligibility.portfolioCount}/2`,
     },
+    {
+      label: "Builder profile completed",
+      completed: eligibility.builderProfileComplete,
+      progress: null,
+    },
   ];
 
   const completedCount = requirements.filter((r) => r.completed).length;
@@ -46,7 +52,7 @@ export function LikesLockedBanner({ eligibility }: LikesLockedBannerProps) {
               Likes Locked - Add proof of work to unlock
             </h3>
             <p className="text-sm text-orange-200/80 mb-3">
-              Connect GitHub and import at least 2 repos to start liking people.
+              Connect GitHub, import 2+ repos, and complete your builder profile to start liking people.
               You can still browse, pass, and save profiles.
             </p>
 
@@ -77,7 +83,7 @@ export function LikesLockedBanner({ eligibility }: LikesLockedBannerProps) {
 
             <div className="flex items-center gap-3 flex-wrap">
               <div className="text-sm font-medium text-orange-200">
-                {completedCount}/2 complete
+                {completedCount}/3 complete
               </div>
               {!eligibility.hasGitHub ? (
                 <Link href="/api/auth/github/start">
@@ -89,6 +95,12 @@ export function LikesLockedBanner({ eligibility }: LikesLockedBannerProps) {
                 <Link href="/dashboard/profile/connect-github">
                   <Button size="sm" variant="default">
                     Import Repositories
+                  </Button>
+                </Link>
+              ) : !eligibility.builderProfileComplete ? (
+                <Link href="/dashboard/profile/builder-onboarding">
+                  <Button size="sm" variant="default">
+                    Complete Builder Profile
                   </Button>
                 </Link>
               ) : (

@@ -64,9 +64,9 @@ export function RepoPicker({ repos }: RepoPickerProps) {
       } else {
         setSuccess(result.message || "Successfully imported repositories!");
         setError(null);
-        // Redirect to profile after a short delay
+        // Redirect based on builder profile completion status
         setTimeout(() => {
-          router.push("/dashboard/profile?tab=portfolio");
+          router.push(result.redirect || "/dashboard/profile");
         }, 2000);
       }
     });

@@ -27,25 +27,16 @@ export async function getUserThreads() {
 
   const threadIds = participantRecords.map((p) => p.thread_id);
 
-  // Get threads with match info and last message
-  const { data: threads } = await supabase
+  // Get threads (match info is optional, use participants to resolve users)
+  const { data: threads, error: threadsError } = await supabase
     .from("threads")
-    .select(
-      `
-      id,
-      match_id,
-      last_message_at,
-      created_at,
-      matches (
-        id,
-        match_type,
-        user_a_id,
-        user_b_id
-      )
-    `
-    )
+    .select("id, last_message_at, created_at")
     .in("id", threadIds)
     .order("last_message_at", { ascending: false });
+
+  if (threadsError) {
+    console.error("Error fetching threads:", threadsError);
+  }
 
   if (!threads) {
     return { threads: [] };
@@ -54,16 +45,23 @@ export async function getUserThreads() {
   // For each thread, get the other participant's info and last message
   const enrichedThreads = await Promise.all(
     threads.map(async (thread: any) => {
-      // Get the other user in the match
-      const match = thread.matches;
-      const otherUserId =
-        match.user_a_id === user.id ? match.user_b_id : match.user_a_id;
+      // Resolve the other user via participants
+      const { data: participants } = await supabase
+        .from("thread_participants")
+        .select("user_id")
+        .eq("thread_id", thread.id)
+        .neq("user_id", user.id)
+        .limit(1);
 
-      const { data: otherUser } = await supabase
-        .from("users_profile")
-        .select("id, full_name, headline, avatar_url")
-        .eq("id", otherUserId)
-        .single();
+      const otherUserId = participants?.[0]?.user_id || null;
+
+      const { data: otherUser } = otherUserId
+        ? await supabase
+            .from("users_profile")
+            .select("id, full_name, headline, avatar_url")
+            .eq("id", otherUserId)
+            .single()
+        : { data: null };
 
       // Get last message
       const { data: lastMessage } = await supabase
@@ -95,7 +93,6 @@ export async function getUserThreads() {
 
       return {
         id: thread.id,
-        matchId: thread.match_id,
         lastMessageAt: thread.last_message_at,
         otherUser,
         lastMessage,
@@ -147,26 +144,17 @@ export async function getThreadMessages(threadId: string) {
     .eq("thread_id", threadId)
     .order("created_at", { ascending: true });
 
-  // Get thread info to find the other user
-  const { data: thread } = await supabase
-    .from("threads")
-    .select(
-      `
-      matches (
-        user_a_id,
-        user_b_id
-      )
-    `
-    )
-    .eq("id", threadId)
-    .single();
-
   let otherUser = null;
-  if (thread?.matches) {
-    const match = thread.matches as any;
-    const otherUserId =
-      match.user_a_id === user.id ? match.user_b_id : match.user_a_id;
+  const { data: participants } = await supabase
+    .from("thread_participants")
+    .select("user_id")
+    .eq("thread_id", threadId)
+    .neq("user_id", user.id)
+    .limit(1);
 
+  const otherUserId = participants?.[0]?.user_id || null;
+
+  if (otherUserId) {
     const { data: userData } = await supabase
       .from("users_profile")
       .select("id, full_name, headline, avatar_url")

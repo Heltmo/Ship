@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ExternalLink, Github, Linkedin, Twitter, Globe, Star } from "lucide-react";
 import Link from "next/link";
+import { ProfileMessage } from "./profile-message";
 
 type ProfileData = {
   id: string;
@@ -16,6 +17,7 @@ type ProfileData = {
   twitter_url: string | null;
   website_url: string | null;
   avatar_url: string | null;
+  allow_messages?: boolean | null;
 };
 
 type PortfolioItem = {
@@ -47,7 +49,7 @@ async function getUserProfile(userId: string) {
   // Get user profile
   const { data: profile, error: profileError } = await supabase
     .from("users_profile")
-    .select("id, full_name, bio, location, github_url, linkedin_url, twitter_url, website_url, avatar_url")
+    .select("id, full_name, bio, location, github_url, linkedin_url, twitter_url, website_url, avatar_url, allow_messages")
     .eq("id", userId)
     .single();
 
@@ -96,7 +98,7 @@ export default async function UserProfilePage({ params }: { params: { userId: st
           />
         )}
         <div className="flex-1">
-          <div className="flex items-start justify-between">
+          <div className="flex items-start justify-between gap-4">
             <div>
               <h1 className="text-3xl font-bold">{profile.full_name || "Anonymous Builder"}</h1>
               {githubIdentity && (
@@ -111,13 +113,17 @@ export default async function UserProfilePage({ params }: { params: { userId: st
                 </a>
               )}
             </div>
-            {isOwnProfile && (
-              <Link href="/dashboard/profile">
-                <Button variant="outline" size="sm">
-                  Edit Profile
-                </Button>
-              </Link>
-            )}
+            <div className="flex items-start justify-end">
+              {isOwnProfile ? (
+                <Link href="/dashboard/profile">
+                  <Button variant="outline" size="sm">
+                    Edit Profile
+                  </Button>
+                </Link>
+              ) : (
+                <ProfileMessage targetUserId={profile.id} allowMessages={profile.allow_messages} />
+              )}
+            </div>
           </div>
 
           {profile.location && (
