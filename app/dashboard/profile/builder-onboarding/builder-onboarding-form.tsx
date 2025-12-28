@@ -74,9 +74,9 @@ export function BuilderOnboardingForm({ initialData }: BuilderOnboardingFormProp
           setFieldErrors(result.details as Record<string, string[]>);
         }
       } else if (result?.success) {
-        // Small delay to ensure cookies are synchronized
-        await new Promise(resolve => setTimeout(resolve, 100));
-        router.push("/matches");
+        // Delay to ensure cookies are synchronized before redirect
+        await new Promise(resolve => setTimeout(resolve, 800));
+        router.push("/dashboard/people");
         router.refresh(); // Force fresh data load
       }
     });
