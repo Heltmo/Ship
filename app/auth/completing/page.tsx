@@ -1,23 +1,17 @@
 "use client";
 
 import { useEffect, Suspense } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { Loader2 } from "lucide-react";
 
 function CompletingContent() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const next = searchParams.get("next") || "/dashboard";
 
   useEffect(() => {
-    // Small delay to ensure cookies are synchronized
-    const timer = setTimeout(() => {
-      router.push(next);
-      router.refresh();
-    }, 200);
-
-    return () => clearTimeout(timer);
-  }, [next, router]);
+    // Use full page reload to ensure cookies are properly synced
+    window.location.href = next;
+  }, [next]);
 
   return (
     <div className="flex min-h-screen items-center justify-center">
