@@ -74,10 +74,8 @@ export function BuilderOnboardingForm({ initialData }: BuilderOnboardingFormProp
           setFieldErrors(result.details as Record<string, string[]>);
         }
       } else if (result?.success) {
-        // Delay to ensure cookies are synchronized before redirect
-        await new Promise(resolve => setTimeout(resolve, 800));
-        router.push("/dashboard/people");
-        router.refresh(); // Force fresh data load
+        // Use full page reload to ensure cookies are properly synced
+        window.location.href = "/dashboard/people";
       }
     });
   };
