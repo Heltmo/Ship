@@ -55,8 +55,12 @@ export async function GET(request: NextRequest) {
       logger.debug("✅ Session created for user:", data?.user?.email);
       logger.debug("✅ Redirecting with cookies set");
 
-      // Create redirect response and copy cookies set during exchange
-      const redirectResponse = NextResponse.redirect(new URL(next, requestUrl.origin));
+      // Redirect to intermediate page to allow cookie synchronization
+      // before final redirect to destination
+      const completingUrl = new URL("/auth/completing", requestUrl.origin);
+      completingUrl.searchParams.set("next", next);
+
+      const redirectResponse = NextResponse.redirect(completingUrl);
       response.cookies.getAll().forEach((cookie) => {
         redirectResponse.cookies.set(cookie);
       });
@@ -68,6 +72,6 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  logger.debug("⚠️  No code provided, redirecting anyway");
-  return NextResponse.redirect(new URL(next, requestUrl.origin));
+  logger.debug("⚠️  No code provided, redirecting to login");
+  return NextResponse.redirect(new URL("/login", requestUrl.origin));
 }
