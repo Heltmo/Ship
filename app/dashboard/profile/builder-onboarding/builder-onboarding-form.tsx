@@ -68,14 +68,15 @@ export function BuilderOnboardingForm({ initialData }: BuilderOnboardingFormProp
     startTransition(async () => {
       const result = await saveBuilderOnboarding(formData as any);
 
-      // If there's an error, show it (otherwise redirect happens server-side)
       if (result?.error) {
         setError(result.error);
         if ("details" in result && result.details) {
           setFieldErrors(result.details as Record<string, string[]>);
         }
+      } else if (result?.success) {
+        // Redirect client-side to preserve session
+        router.push("/matches");
       }
-      // Success redirect happens server-side in the action
     });
   };
 

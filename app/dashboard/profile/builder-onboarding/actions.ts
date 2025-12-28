@@ -6,7 +6,6 @@ import {
   type BuilderOnboardingInput,
 } from "@/lib/validations/builder-profile";
 import { revalidatePath, unstable_noStore } from "next/cache";
-import { redirect } from "next/navigation";
 
 /**
  * Save builder onboarding data
@@ -74,8 +73,8 @@ export async function saveBuilderOnboarding(data: BuilderOnboardingInput) {
   revalidatePath("/matches");
   revalidatePath("/dashboard/people");
 
-  // Redirect to people feed - this happens server-side after all updates are complete
-  redirect("/matches");
+  // Return success - client will handle redirect to preserve session
+  return { success: true };
 }
 
 /**
