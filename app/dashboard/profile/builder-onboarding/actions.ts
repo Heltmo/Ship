@@ -73,7 +73,21 @@ export async function saveBuilderOnboarding(data: BuilderOnboardingInput) {
   revalidatePath("/matches");
   revalidatePath("/dashboard/people");
 
-  // Return success - client will handle redirect to preserve session
+  // Force session refresh to ensure latest tokens are available
+  const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+
+  if (sessionError || !session || !session.access_token) {
+    return { error: "Session expired. Please log in again." };
+  }
+
+  // Check if token is about to expire (less than 5 minutes)
+  const expiresAt = session.expires_at;
+  const now = Math.floor(Date.now() / 1000);
+  if (expiresAt && (expiresAt - now) < 300) {
+    return { error: "Session about to expire. Please log in again." };
+  }
+
+  // Return success - client will handle redirect with validated session
   return { success: true };
 }
 
