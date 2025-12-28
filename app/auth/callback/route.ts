@@ -16,12 +16,12 @@ export async function GET(request: NextRequest) {
   logger.debug("Redirect to:", next);
 
   if (code) {
-    let response = NextResponse.next({
-      request: {
-        headers: request.headers,
-      },
-    });
+    // Create redirect response URL first
+    const completingUrl = new URL("/auth/completing", requestUrl.origin);
+    completingUrl.searchParams.set("next", next);
+    const redirectResponse = NextResponse.redirect(completingUrl);
 
+    // Create Supabase client that sets cookies directly on redirect response
     const supabase = createServerClient(
       process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL ?? "",
       process.env.SUPABASE_ANON_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "",
@@ -32,13 +32,11 @@ export async function GET(request: NextRequest) {
           },
           set(name: string, value: string, options: any) {
             logger.debug("🍪 Setting cookie:", name);
-            request.cookies.set({ name, value, ...options });
-            response.cookies.set({ name, value, ...options });
+            redirectResponse.cookies.set({ name, value, ...options });
           },
           remove(name: string, options: any) {
             logger.debug("🗑️  Removing cookie:", name);
-            request.cookies.set({ name, value: "", ...options });
-            response.cookies.set({ name, value: "", ...options });
+            redirectResponse.cookies.set({ name, value: "", ...options });
           },
         },
       }
@@ -53,17 +51,7 @@ export async function GET(request: NextRequest) {
       }
 
       logger.debug("✅ Session created for user:", data?.user?.email);
-      logger.debug("✅ Redirecting with cookies set");
-
-      // Redirect to intermediate page to allow cookie synchronization
-      // before final redirect to destination
-      const completingUrl = new URL("/auth/completing", requestUrl.origin);
-      completingUrl.searchParams.set("next", next);
-
-      const redirectResponse = NextResponse.redirect(completingUrl);
-      response.cookies.getAll().forEach((cookie) => {
-        redirectResponse.cookies.set(cookie);
-      });
+      logger.debug("✅ Cookies set on redirect response");
 
       return redirectResponse;
     } catch (e) {
