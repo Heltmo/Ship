@@ -1,11 +1,12 @@
 "use server";
 
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, unstable_noStore } from "next/cache";
 import { messageLimiter } from "@/lib/security/rate-limit";
 
 // Get viewer's profile and eligibility status
 export async function getViewerEligibility() {
+  unstable_noStore(); // Force dynamic - never cache this function
   const supabase = createServerSupabaseClient();
 
   const {
@@ -65,6 +66,7 @@ export async function getViewerEligibility() {
 
 // Get feed of eligible users
 export async function getFeedPeople(limit = 50, offset = 0) {
+  unstable_noStore(); // Force dynamic - never cache this function
   const supabase = createServerSupabaseClient();
 
   const {

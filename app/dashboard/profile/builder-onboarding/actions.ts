@@ -5,7 +5,7 @@ import {
   builderOnboardingSchema,
   type BuilderOnboardingInput,
 } from "@/lib/validations/builder-profile";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, unstable_noStore } from "next/cache";
 import { redirect } from "next/navigation";
 
 /**
@@ -83,6 +83,7 @@ export async function saveBuilderOnboarding(data: BuilderOnboardingInput) {
  * Returns current values of all builder profile fields
  */
 export async function getBuilderOnboardingStatus() {
+  unstable_noStore(); // Force dynamic - never cache this function
   const supabase = createServerSupabaseClient();
 
   const {
@@ -122,6 +123,7 @@ export async function getBuilderOnboardingStatus() {
  * Returns true if all required fields are filled
  */
 export async function checkBuilderProfileComplete() {
+  unstable_noStore(); // Force dynamic - never cache this function
   const supabase = createServerSupabaseClient();
 
   const {
