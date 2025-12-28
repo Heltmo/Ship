@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Loader2 } from "lucide-react";
 
-export default function CompletingAuthPage() {
+function CompletingContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const next = searchParams.get("next") || "/dashboard";
@@ -26,5 +26,20 @@ export default function CompletingAuthPage() {
         <p className="mt-4 text-sm text-slate-400">Completing sign in...</p>
       </div>
     </div>
+  );
+}
+
+export default function CompletingAuthPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="mx-auto h-8 w-8 animate-spin text-orange-400" />
+          <p className="mt-4 text-sm text-slate-400">Completing sign in...</p>
+        </div>
+      </div>
+    }>
+      <CompletingContent />
+    </Suspense>
   );
 }
