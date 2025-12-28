@@ -74,7 +74,8 @@ export function BuilderOnboardingForm({ initialData }: BuilderOnboardingFormProp
           setFieldErrors(result.details as Record<string, string[]>);
         }
       } else if (result.success) {
-        // Redirect to people feed on success
+        // Refresh to ensure fresh data is loaded, then redirect
+        router.refresh();
         router.push("/matches");
       }
     });
